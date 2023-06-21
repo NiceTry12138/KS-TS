@@ -461,3 +461,214 @@ function checkAdult(age: number) {
 console.log(ages.find(checkAdult));
 ```
 
+其对应的 torque 代码如下
+
+```ts
+transitioning macro FastArrayFind(implicit context: Context)(
+    o: JSReceiver, len: Number, callbackfn: Callable, thisArg: JSAny): JSAny
+    labels Bailout(Smi) {
+  let k: Smi = 0;
+  const smiLen = Cast<Smi>(len) otherwise goto Bailout(k);
+  const fastO = Cast<FastJSArray>(o) otherwise goto Bailout(k);
+  let fastOW = NewFastJSArrayWitness(fastO);
+
+  // Build a fast loop over the smi array.
+  for (; k < smiLen; k++) {
+    fastOW.Recheck() otherwise goto Bailout(k);
+
+    // Ensure that we haven't walked beyond a possibly updated length.
+    if (k >= fastOW.Get().length) goto Bailout(k);
+
+    const value: JSAny = fastOW.LoadElementOrUndefined(k);
+    const testResult: JSAny =
+        Call(context, callbackfn, thisArg, value, k, fastOW.Get());
+    if (ToBoolean(testResult)) {
+      return value;
+    }
+  }
+  return Undefined;
+}
+```
+
+遍历整个数组，通过回调函数判断返回值的真假，最后将值返回回去
+
+- some
+
+用于检测数组中的元素是否满足指定条件
+
+1. 如果有一个元素满足条件，则表达式返回 `true` , 剩余的元素不会再执行检测
+2. 如果没有满足条件的元素，则返回 `false`
+
+```ts
+var ages = [3, 10, 18, 20];
+ 
+function checkAdult(age: number) {
+    console.log(age);
+    return age >= 18;
+}
+ 
+console.log(ages.some(checkAdult)); 
+// [LOG]: 3 
+// [LOG]: 10 
+// [LOG]: 18 
+// [LOG]: true
+```
+
+> 遍历数组，然后在找到返回值为 true 的时候停止，并且输出true；没有返回值为 true 的时候，输出false
+
+对应的 torque 代码如下
+
+```ts
+transitioning macro FastArraySome(implicit context: Context)(
+    o: JSReceiver, len: Number, callbackfn: Callable, thisArg: JSAny): JSAny
+    labels Bailout(Smi) {
+  let k: Smi = 0;
+  const smiLen = Cast<Smi>(len) otherwise goto Bailout(k);
+  const fastO = Cast<FastJSArray>(o) otherwise goto Bailout(k);
+  let fastOW = NewFastJSArrayWitness(fastO);
+
+  // Build a fast loop over the smi array.
+  for (; k < smiLen; k++) {
+    fastOW.Recheck() otherwise goto Bailout(k);
+
+    // Ensure that we haven't walked beyond a possibly updated length.
+    if (k >= fastOW.Get().length) goto Bailout(k);
+    const value: JSAny = fastOW.LoadElementNoHole(k) otherwise continue;
+    const result: JSAny =
+        Call(context, callbackfn, thisArg, value, k, fastOW.Get());
+    if (ToBoolean(result)) {
+      return True;
+    }
+  }
+  return False;
+}
+```
+
+- sort
+
+用于对数组的元素进行排序
+
+在数据量小的子数组中使用插入排序，然后再使用归并排序将有序的子数组进行合并排序，时间复杂度为 `O(nlogn)`
+
+排序顺序可以是字母或数字，并按升序或降序
+
+它可以接受一个可选的比较函数作为参数，来定义排序的规则。如果没有提供比较函数，那么数组的元素会被转换为字符串，然后按照 `Unicode` 编码的顺序进行排序
+
+1. 如果比较函数返回一个小于 0 的值，那么第一个参数会排在第二个参数前面
+2. 如果返回一个大于 0 的值，那么第二个参数会排在第一个参数前面
+3. 如果返回 0，那么两个参数的顺序不变
+
+```ts
+var ages = [22, 19, 18, 20];
+console.log(ages.sort());
+
+ages = [22, 19, 18, 20];
+console.log(ages.sort((a, b) => b - a));
+```
+
+Array.sort 函数会原地修改数组，也就是说，它不会返回一个新的数组，而是直接改变原来的数组
+
+[ V8 sort 的大概思路](https://juejin.cn/post/6961559041457946632)
+
+- slice
+
+从一个数组中提取一部分元素，并返回一个新的数组，而不会改变原始数组
+
+Array.slice 方法接受两个可选的参数，分别是 start 和 end ，表示提取的开始位置和结束位置（不包括）的索引
+
+1. 如果 start 或 end 是负数，表示从数组的末尾开始计算，例如 -1 表示最后一个元素，-2 表示倒数第二个元素，依此类推
+2. 如果 start 或 end 超出了数组的范围，会被自动调整到合理的值
+3. 如果 start 大于等于 end ，或者 start 和 end 都是负数且 start 小于等于 end ，则返回一个空数组
+4. 如果没有指定 start 或 end ，则默认为 0 和数组的长度
+
+```ts
+var fruits = ["Banana", "Orange", "Lemon", "Apple", "Mango"];
+
+// 提取从索引 1 到索引 3（不包括）的元素
+var citrus = fruits.slice(1, 3); 
+console.log(citrus); // ["Orange", "Lemon"]
+
+// 提取从索引 -3 到索引 -1（不包括）的元素
+var myBest = fruits.slice(-3, -1);
+console.log(myBest); // ["Lemon", "Apple"]
+
+// 提取从索引 0 到数组末尾的所有元素
+var all = fruits.slice();
+console.log(all); // ["Banana", "Orange", "Lemon", "Apple", "Mango"]
+```
+
+对应 `slice` 的部分源码如下
+
+```ts
+transitioning javascript builtin
+ArrayPrototypeSlice(
+    js-implicit context: NativeContext, receiver: JSAny)(...arguments): JSAny {
+  const o: JSReceiver = ToObject_Inline(context, receiver);
+
+  const len: Number = GetLengthProperty(o);
+
+  const start: JSAny = arguments[0];
+  const relativeStart: Number = ToInteger_Inline(start);
+
+  let k: Number = relativeStart < 0 ? Max((len + relativeStart), 0) :
+                                      Min(relativeStart, len);
+
+  const end: JSAny = arguments[1];
+  const relativeEnd: Number = end == Undefined ? len : ToInteger_Inline(end);
+
+  if ((start == Undefined || TaggedEqual(start, SmiConstant(0))) &&
+      end == Undefined) {
+    typeswitch (receiver) {
+      case (a: FastJSArrayForCopy): {
+        return CloneFastJSArray(context, a);
+      }
+      case (JSAny): {
+      }
+    }
+  }
+  
+  const final: Number = relativeEnd < 0 ? Max((len + relativeEnd), 0) : Min(relativeEnd, len);
+
+  const count: Number = Max(final - k, 0);
+  // ... 一些注释 和 数据处理
+  try {
+    return HandleFastSlice(context, o, k, count)
+        otherwise Slow;
+  } label Slow {}
+
+  // ... 手动slice的代码
+  return a;
+}
+```
+
+- splice
+
+通过移除或替换已存在的元素和/或添加新元素来改变一个数组的内容
+
+```ts
+Array.splice(start, deleteCount, item1, item2, ...);
+```
+
+| 参数 | 作用 |
+| --- | --- |
+| start | 是要开始改变数组的位置的索引 |
+| deleteCount | 是要从 start 开始删除的元素数量 |
+| item1, item2, … | 是要从 start 开始加入到数组中的元素。这个方法会修改原数组，并返回一个包含被删除元素的新数组 |
+
+```ts
+const fruits = ["apple", "banana", "cherry", "durian"];
+const removed = fruits.splice(1, 1); // 删除第二个元素（"banana"）
+console.log(removed);
+removed = fruits.splice(1, 0, "blueberry"); // 在第二个位置插入一个新元素（"blueberry"）
+console.log(removed);
+removed = fruits.splice(2, 2, "grape", "kiwi"); // 把第三个和第四个元素（"cherry" 和 "durian"）替换成两个新元素（"grape" 和 "kiwi"）
+console.log(removed);
+```
+
+## Map
+
+- keys
+
+
+- values
+
