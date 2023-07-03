@@ -17,3 +17,26 @@ console.log(newArr2); // 输出 [1, "a", true, 1, "a", true, 1, "a", true]
 
 # 解题思路
 
+```ts
+function createArray<T, U>(arr1: T[], arr2: U[]): (T | U)[];
+function createArray<T, U, V>(item1: T, item2: U, item3: V): (num: number) => (T | U | V)[];
+
+function createArray(...args: any[]) {
+    let result = new Array();
+    args.forEach((item) => {
+        result = result.concat(item);
+    });
+
+    if(args.length === 3) {
+        return function(num: number) {
+            let newArr = new Array();
+            for(let index = 0; index < num; ++index) {
+                newArr = newArr.concat(...result);
+            }
+            return newArr;
+        }
+    }
+
+    return result;
+}
+```
