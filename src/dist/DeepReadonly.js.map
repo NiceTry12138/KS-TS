@@ -1,0 +1,1 @@
+{"version":3,"file":"DeepReadonly.js","sourceRoot":"","sources":["../src/DeepReadonly.ts"],"names":[],"mappings":";;;AAAA,IAAiB,cAAc,CAqB9B;AArBD,WAAiB,cAAc;IAY3B,SAAgB,GAAG;QACf,IAAI,EAAE,GAAyB;YAC3B,IAAI,EAAE,MAAM;YACZ,OAAO,EAAE,EAAC,IAAI,EAAE,MAAM,EAAC;SAC1B,CAAC;QAEF,4BAA4B;QAC5B,oCAAoC;IACxC,CAAC;IARe,kBAAG,MAQlB,CAAA;AACL,CAAC,EArBgB,cAAc,8BAAd,cAAc,QAqB9B"}

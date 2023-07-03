@@ -13,11 +13,11 @@ var HasWithType;
             this.val = new B();
         }
     }
-    function hasWithTypes(obj, name, type) {
+    function hasWithTypes(obj, name, targetType) {
         if (!Reflect.has(obj, name)) {
             return false;
         }
-        return Reflect.get(obj, name) instanceof type;
+        return Reflect.get(obj, name) instanceof targetType;
     }
     function Run() {
         let a = new Example();

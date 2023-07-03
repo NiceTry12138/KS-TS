@@ -16,3 +16,4 @@ console.log(newArr2); // 输出 [1, "a", true, 1, "a", true, 1, "a", true]
 ```
 
 # 解题思路
+

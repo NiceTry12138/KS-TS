@@ -4,7 +4,7 @@ namespace Filter {
 
     type Filter<T extends readonly any[], U> = {
         [K in keyof T]: T[K] extends U ? T[K] : never;
-    }[number];
+    }[number][];
 
     type OnlyFruits = Filter<Fruits, Fruit>; // ['apple', 'banana', 'orange']
 }

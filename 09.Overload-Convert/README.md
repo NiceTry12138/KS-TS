@@ -10,3 +10,26 @@ console.log(convert('hello')); // 输出 HELLO!
 ```
 
 # 解题思路
+
+TS 通过提供多个函数类型的声明来间接实现了函数的重载
+
+# 代码
+
+```ts
+export namespace Convert {
+    function convert(input: number): number;
+    function convert(input: string): string;
+
+    function convert(input: number | string): number | string {
+        if(typeof input === `string`) {
+            return input.toUpperCase() + "!";
+        }
+        return input * 2;
+    }
+
+    export function Run() {
+        console.log(convert("qwer"));
+        console.log(convert(2));
+    }
+}
+```
