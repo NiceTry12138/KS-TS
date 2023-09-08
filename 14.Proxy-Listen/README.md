@@ -25,3 +25,41 @@ proxy.info.address = 'Shanghai'; // 属性 info.address 从 Beijing 变成了 Sh
 ```
 
 # 解题思路
+
+```js
+const obj = {
+  name: 'Tom',
+  age: 18,
+  info: {
+    address: 'Beijing',
+  },
+};
+
+function isObject(value) {
+    const valueType = typeof value;
+    return (value !== null) && (valueType === "object" || valueType === "function")
+}
+
+function createDeepProxy(obj, propertyFunc) {
+  for(const key in obj) {
+    if(isObject(obj[key])) {
+      obj[key] = createDeepProxy(obj[key], propertyFunc);
+    }
+  }
+  let proxy = new Proxy(obj, {
+    set : function(target, key, receiver) {
+      propertyFunc(key, target[key], receiver);
+      target[key] = receiver;
+    }
+  })
+  return proxy;
+}
+
+const proxy = createDeepProxy(obj, (prop, oldValue, newValue) => {
+  console.log(`属性 ${prop} 从 ${oldValue} 变成了 ${newValue}`);
+});
+
+proxy.name = 'Jerry'; // 属性 name 从 Tom 变成了 Jerry
+proxy.age = 19; // 属性 age 从 18 变成了 19
+proxy.info.address = 'Shanghai'; // 属性 info.address 从 Beijing 变成了 Shanghai
+```

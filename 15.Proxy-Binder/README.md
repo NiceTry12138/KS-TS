@@ -27,3 +27,9 @@ speak();
 ```
 
 # 解题思路
+
+```ts
+const dog = new Dog('Fido');
+const speak1 = dog.speak.bind(dog);
+speak1();
+```
